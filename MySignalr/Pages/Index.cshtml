@@ -1,0 +1,85 @@
+﻿@page
+<div class="container">
+    <div class="row">&nbsp;</div>
+    <div class="row">
+        <div class="col-6">&nbsp;</div>
+        <div class="col-6">
+            User..........<input type="text" id="userInput" />
+            <br />
+            Message...<input type="text" id="messageInput" />
+            <input type="button" id="sendButton" value="Send Message" />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <hr />
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-6">&nbsp;</div>
+        <div class="col-6">
+            <ul id="messagesList"></ul>
+        </div>
+    </div>
+</div>
+
+<!--画板-->
+<div id="mappic" style="height:800px;width:800px;position:absolute">
+
+
+
+</div>
+
+<script src="~/js/jquery-1.11.0.min.js"></script>
+<script>
+    function pen(x, y) {
+        $("#dot").remove();
+        var str = ' <div id="dot" style="position: absolute;top:' + y + 'px;left:' + x + 'px;border-radius: 50%;line-height: 10px;text-align: center;background: red;color:#fff;;width:10px;height:10px;z-index:10"></div>';
+        $("#mappic").append(str);
+    }
+
+</script>
+ 
+<script src="~/lib/signalr/dist/browser/signalr.js"></script>
+<script>
+    var connection = new signalR.HubConnectionBuilder().withUrl("/chatHub").build();
+
+    connection.on("ReceiveMessage", function (user, message) {
+        var msg = message.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        var encodedMsg = user + " says " + msg;
+        var li = document.createElement("li");
+        li.textContent = encodedMsg;
+        var points = msg.split(",");
+        var x = points[0];
+        var y = points[1];
+         pen(x,y);
+        // document.getElementById("messagesList").appendChild(li);
+        //alert(msg);
+    });
+
+    connection.start().catch(function (err) {
+        return console.error(err.toString());
+    });
+
+    $("#mappic").click(function () {
+        $("#dot").remove();
+        var x = event.offsetX;
+        var y = event.offsetY; 
+        var user = document.getElementById("userInput").value;
+        connection.invoke("SendMessage", user, x + "," + y).catch(function (err) {
+            return console.error(err.toString());
+        });
+    });
+
+
+    //document.getElementById("sendButton").addEventListener("click", function (event) {
+
+    //    var user = document.getElementById("userInput").value;
+    //    var message = document.getElementById("messageInput").value;
+    //    connection.invoke("SendMessage", user, message).catch(function (err) {
+    //        return console.error(err.toString());
+    //    });
+    //    event.preventDefault();
+    //});
+
+</script>
